@@ -17,6 +17,22 @@ export const loginUser = (data) => {
     }
 }
 
+export const getUser = (id,token) => {
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+    return {
+        type: 'GET_USER',
+        payload: axios.get(url+'user/profile/'+id)      
+    }
+}
+
+export const updateUser = (id,data,token) => {
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+    return {
+        type: 'UPDATE_USER',
+        payload: axios.post(url+'user/updateProfile/'+id,data)      
+    }
+}
+
 export const changeLoginStatus = (data) => {
 
     return {

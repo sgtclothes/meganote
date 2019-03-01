@@ -45,6 +45,46 @@ const initialState = {
         return {
            ...state,
             isLoading: true,
+            user: action.payload.data
+        }
+
+        case 'GET_USER_PENDING':
+        return {
+            ...state,
+            isLoading: true
+        }
+        
+        case 'GET_USER_REJECTED':
+        return {
+            ...state,
+            isLoading: false,
+            isError:true
+        }
+
+        case 'GET_USER_FULFILLED':
+        return {
+           ...state,
+            isLoading: true,
+            profile: action.payload.data
+        }
+
+        case 'UPDATE_USER_PENDING':
+        return {
+            ...state,
+            isLoading: true
+        }
+        
+        case 'UPDATE_USER_REJECTED':
+        return {
+            ...state,
+            isLoading: false,
+            isError:true
+        }
+
+        case 'UPDATE_USER_FULFILLED':
+        return {
+           ...state,
+            isLoading: true,
             profile: action.payload.data
         }
 

@@ -1,8 +1,11 @@
 import React, {Component} from 'react'
-import {View, Text, AsyncStorage, BackHandler, Alert} from 'react-native'
+import {View, Text, AsyncStorage, BackHandler, Alert, FlatList, TouchableOpacity, ScrollView, AppState} from 'react-native'
 import {Header, Left, Right, Card, Fab, Container, Button} from 'native-base'
+import {withNavigation} from 'react-navigation'
 import {connect} from 'react-redux'
+
 import {changeLoginStatus} from '../src/publics/redux/actions/users'
+import {getNotes} from '../src/publics/redux/actions/notes'
 
 import IconMaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import IconFontAwesome from 'react-native-vector-icons/FontAwesome'
@@ -13,23 +16,55 @@ class allNotes extends Component {
     constructor(props) {
         super(props)
         this.state = {
-            active:'true'
+            active:'true',
+            selectedNote:[],
+            appState: AppState.currentState
         }
     }
 
     componentDidMount() {
-        BackHandler.addEventListener('hardwareBackPress', this.handleBackButton);
-      }
-      
-      componentWillUnmount() {
-        BackHandler.removeEventListener('hardwareBackPress', this.handleBackButton);
+        AppState.addEventListener('change', this._handleAppStateChange)
+        this.focusListener = this.props.navigation.addListener('didFocus',()=>{
+        BackHandler.addEventListener('hardwareBackPress', this.handleBackButton) 
+        this._fetchData()
+        })
       }
 
+    async _fetchData() {
+        await this.props.dispatch(getNotes())
+    }
+
+    async handleEditScreen(id, data) {
+        await BackHandler.removeEventListener('hardwareBackPress', this.handleBackButton)
+        this.props.navigation.navigate('editItem', {id, data})
+        
+    }
+      
+    componentWillUnmount() {
+        BackHandler.removeEventListener('hardwareBackPress', this.handleBackButton)
+        AppState.removeEventListener('change', this._handleAppStateChange)
+      }
+
+    async handleAddButton() {
+        await BackHandler.removeEventListener('hardwareBackPress', this.handleBackButton)
+        this.props.navigation.push('newItem')
+        
+    }
+
+    _handleAppStateChange = (nextAppState) => {
+        if (
+          this.state.appState.match(/inactive|background/) &&
+          nextAppState === 'active'
+        ) {
+          console.log('App has come to the foreground!')
+        }
+        this.setState({appState: nextAppState})
+      }
 
     handleBackButton = () => {
         Alert.alert(
             'Exit App',
-            'Exiting meganote?',
+            'Exit meganote?',
             [
               {
                 text: 'Cancel',
@@ -46,7 +81,7 @@ class allNotes extends Component {
             }
           );
           return true
-        }
+    }
 
     async _handleLogout() {
         this.props.dispatch(changeLoginStatus(false))
@@ -54,47 +89,97 @@ class allNotes extends Component {
         await this.props.navigation.navigate('loginScreen')
     }
 
+    async _handleCheckToken() {
+        const a = await AsyncStorage.getItem('token')
+        const b = await AsyncStorage.getItem('id')
+        alert(JSON.stringify(this.props.notes.data))
+    }
+
+    _regularExpression(item) {
+        let s
+        let date
+
+        if(item != null) {
+            s = item
+            date = s.match(/^\d{4}-\d{2}-\d{2}/g)
+        } else {
+            date = ''
+        }
+            return date
+    }
+
     render() {
         return (
             <Container>
-            <View>
-                <Header style={{backgroundColor:'#3B53EA'}}>
-                <Left style={{borderWidth:1}}>
-                    <IconMaterialIcons color='white' name='menu' size={20} onPress={()=>{}}/>   
-                </Left>
-                <View style={{alignSelf:'center', borderWidth:1, marginHorizontal:100}}>
-                    <Text style={{color:'white'}}>Test</Text>
+                <ScrollView>
+                <View>
+                    <Header style={{backgroundColor:'#3B53EA'}}>
+                        <Left>
+                            <IconMaterialIcons color='white' name='menu' size={30} onPress={()=>{}}/>   
+                        </Left>
+                        <View style={{alignSelf:'center',marginHorizontal:100}}>
+                            <Text style={{color:'white'}}>Meganote</Text>
+                        </View>
+                        <Right>
+                            <IconMaterialIcons color='white' name='search' size={20} onPress={()=>{}}/> 
+                        </Right>
+                    </Header>
+                    <Card style={{flexDirection:'row', marginTop:10}}>
+                        <IconSimpleLineIcons style={{marginLeft:10}} name='note' size={30} color='#3B53EA' />
+                        <Text onPress={()=>{alert(JSON.stringify(this.props.notes.data))}} style={{fontSize:20, marginLeft:5, fontWeight:'bold', color:'#3B53EA', alignSelf:'center'}}>All Notes</Text>
+                    </Card>
+                        <FlatList
+							data={this.props.notes.data}
+							refreshing={this.props.notes.isLoading}
+							showsHorizontalScrollIndicator={false}
+							keyExtractor={(item,index)=>String(index)}
+							renderItem={({item, index}) => {
+                                return (
+                                    <TouchableOpacity style={{borderBottomWidth:1}} onPress={()=>{this.handleEditScreen(item.id,item)}}>
+                                        <Text numberOfLines={1} style={{marginLeft:10, fontSize:20, color:'#3B53EA'}}>{item.title}</Text>
+                                        <View style={{flexDirection:'row'}}>
+                                            <Text  numberOfLines={1} style={{marginLeft:10, fontSize:10, color:'#3B53EA', width:100}}>{item.note}</Text>
+                                            <Text style={{fontSize:10, color:'#3B53EA', marginLeft:30}}>Date Created : {item.created_at}</Text>
+                                        </View>
+                                    </TouchableOpacity>
+                                )
+                            }}
+                            />
+                    <Card style={{flexDirection:'row', marginTop:10}}>
+                        <IconSimpleLineIcons style={{marginLeft:10}} name='clock' size={30} color='#3B53EA' />
+                        <Text onPress={()=>{this._handleCheckToken()}} style={{fontSize:20, marginLeft:5, fontWeight:'bold', color:'#3B53EA', alignSelf:'center'}}>All Reminders</Text>
+                    </Card>
+                        <FlatList
+                            data={this.props.notes.data}
+                            refreshing={this.props.notes.isLoading}
+                            showsHorizontalScrollIndicator={false}
+                            keyExtractor={(item,index)=>String(index)}
+                            renderItem={({item, index}) => {
+                                if(item.reminder.schedule != null) { 
+                                    return (
+                                        <TouchableOpacity onPressIn={()=>{this._regularExpression(item.reminder.schedule)}} style={{borderBottomWidth:1}} onPress={()=>{this.handleEditScreen(item.id,item)}}>
+                                            <Text numberOfLines={1} style={{marginLeft:10, fontSize:20, color:'#3B53EA'}}>{this._regularExpression(item.reminder.schedule)}</Text>
+                                            <View style={{flexDirection:'row'}}>
+                                                <Text  numberOfLines={1} style={{marginLeft:10, fontWeight:'bold', fontSize:10, color:'#3B53EA', width:100}}>{item.title}</Text>
+                                            </View>
+                                        </TouchableOpacity>
+                                    )
+                                }
+                            }}
+                        />
                 </View>
-                <Right style={{borderWidth:1}}>
-                    <IconMaterialIcons color='white' name='search' size={20} onPress={()=>{}}/> 
-                </Right>
-                </Header>
-                <Text style={{fontSize:20, marginLeft:10}}>All Notes</Text>
-                <Card>
-                <Text>Test</Text>
-                </Card>
-                <Card>
-                <Text>Notes</Text>
-                </Card>
-                <Button onPress={()=>{this._handleLogout()}}>
-                    <Text>Log out</Text>
-                </Button>
-                </View>
-                
+                </ScrollView>
                 <View style={{flex:1}}>
-
-                
-                <Fab
-                    active={this.state.active}
-                    direction="up"
-                    containerStyle={{ }}
-                    style={{ backgroundColor: '#3B53EA' }}
-                    position="bottomRight"
-                    onPress={()=>{this.props.navigation.push('newItem')}}>
-                     <IconFontAwesome name="plus" />
-                 </Fab>
-                 </View>
-
+                    <Fab
+                        active={this.state.active}
+                        direction="up"
+                        containerStyle={{ }}
+                        style={{ backgroundColor: '#3B53EA' }}
+                        position="bottomRight"
+                        onPress={()=>{this.handleAddButton()}}>
+                        <IconFontAwesome name="plus" />
+                    </Fab>
+                </View>
             </Container>
         )
     }
@@ -102,8 +187,9 @@ class allNotes extends Component {
 
 const mapStateToProps = (state) => {
     return {
-        users: state.users
+        users: state.users,
+        notes: state.notes
     }
 }
 
-export default connect(mapStateToProps)(allNotes)
+export default connect(mapStateToProps)(withNavigation(allNotes))

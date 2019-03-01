@@ -1,7 +1,8 @@
 import React, {Component} from 'react'
-import {View, Text, Image, Button, TouchableOpacity} from 'react-native'
+import {View, Text, Image, Button, TouchableOpacity, BackHandler} from 'react-native'
 import {Container, Header, Content, Form, Item, Input, Card, Label} from 'native-base'
 import {connect} from 'react-redux'
+import {withNavigation} from 'react-navigation'
 import {registerUser} from '../src/publics/redux/actions/users'
 
 class registerScreen extends Component {
@@ -15,10 +16,30 @@ class registerScreen extends Component {
         }
     }
 
+    componentDidMount() {
+        this.focusListener = this.props.navigation.addListener('didFocus',async ()=>{
+        await BackHandler.addEventListener('hardwareBackPressRegister',this.handleBackButtonRegister)
+     })
+    }
+
+    handleBackButtonRegister = async () =>{
+        await BackHandler.removeEventListener('hardwareBackPressRegister',this.handleBackButtonRegister)   
+        this.props.navigation.goBack()
+    }
+
     //Actions from redux
     async _handleRegister(data) {
-        this.props.dispatch(registerUser(data))
-        return await alert('Register successful')
+        if(this.state.username==''||this.state.email==''||this.state.password==''){
+            alert('Please fill it correct')
+        }
+
+        try {
+            await this.props.dispatch(registerUser(data))
+            await alert('Register successful')
+            this.props.navigation.push('loginScreen')
+        } catch(e) {
+            alert('Please fill it correct')
+        }
     }
 
 
@@ -82,4 +103,4 @@ const mapStateToProps = ({users}) => {
     }
 }
 
-export default connect(mapStateToProps)(registerScreen)
+export default connect(mapStateToProps)(withNavigation(registerScreen))

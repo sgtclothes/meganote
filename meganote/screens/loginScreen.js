@@ -1,7 +1,8 @@
 import React, {Component} from 'react'
-import {View, Text, Image, Button, TouchableOpacity, AsyncStorage, ActivityIndicator} from 'react-native'
+import {View, Text, Image, Button, TouchableOpacity, AsyncStorage, ActivityIndicator, BackHandler, Alert} from 'react-native'
 import {Container, Header, Content, Form, Item, Input, Card} from 'native-base'
 import {connect} from 'react-redux'
+import {withNavigation} from 'react-navigation'
 import {loginUser,changeLoginStatus} from '../src/publics/redux/actions/users'
 
 class loginScreen extends Component {
@@ -12,20 +13,57 @@ class loginScreen extends Component {
         super(props)
         this.state = {
             email:'',
-            password:''
+            password:'',
+            id:''
         }
     }
 
-    async componentDidMount() {
-        await this._retrieveData()
+    componentDidMount() {
+        this.focusListener = this.props.navigation.addListener('didFocus',()=>{
+        BackHandler.addEventListener('hardwareBackPress', this.handleBackButton)
+        this._retrieveData()
+        }
+        )
     }
+
+    componentWillUnmount() {
+        BackHandler.removeEventListener('hardwareBackPress', this.handleBackButton)
+      }
+
+
+    async handleAddButton() {
+        await BackHandler.removeEventListener('hardwareBackPress', this.handleBackButton)
+        
+    }
+
+    handleBackButton = () => {
+        Alert.alert(
+            'Exit App',
+            'Exit meganote?',
+            [
+              {
+                text: 'Cancel',
+                onPress: () => console.log('Cancel Pressed'),
+                style: 'cancel'
+              },
+              {
+                text: 'OK',
+                onPress: () => BackHandler.exitApp()
+              }
+            ],
+            {
+              cancelable: false
+            }
+          );
+          return true
+        }
 
     _retrieveData = async () => {
         try {
           const value = await AsyncStorage.getItem('token')
           if (value !== null) {
             this.props.dispatch(changeLoginStatus(true))
-            this.props.navigation.push('allNotes')
+            this.props.navigation.navigate('Main')
           }
         } catch (error) {
           // Error retrieving data
@@ -36,19 +74,25 @@ class loginScreen extends Component {
         
         try {
             await this.props.dispatch(loginUser(data))
-            await AsyncStorage.setItem('token',this.props.users.profile.access_token.token)
-            this.props.navigation.push('allNotes')
+            await AsyncStorage.setItem('id',String(this.props.users.user.user.id))
+            await AsyncStorage.setItem('token',this.props.users.user.access_token.token)
+            
+            this.props.navigation.push('Main')
         } catch(e) {
-            if(e) {
-            alert('Incorrect email and password')
-            }
+            alert('Please fill the correct form')
         }
             
     }
 
+    async handleRegister() {
+        await BackHandler.removeEventListener('hardwareBackPress', this.handleBackButton)
+        this.props.navigation.navigate('registerScreen')
+    }
+
     async _checkToken() {
+        const b = await AsyncStorage.getItem('id')
         const a = await AsyncStorage.getItem('token')
-        await alert(JSON.stringify(a))
+        alert(JSON.stringify(a+b))
     }
 
     render() {
@@ -94,7 +138,7 @@ class loginScreen extends Component {
                 </Card>
                 <View style={{alignItems:'center', marginTop:20}}>
                     <Text>Don't have an account?</Text>
-                    <Text onPress={()=>this.props.navigation.navigate('registerScreen')} style={{color:'#3B53EA', marginTop:10}}>Create account</Text>
+                    <Text onPress={()=>{this.handleRegister()}} style={{color:'#3B53EA', marginTop:10}}>Create account</Text>
                 </View>
             </Content>      
         </Container>
@@ -109,4 +153,4 @@ const mapStateToProps = (state) => {
     }
 }
 
-export default connect(mapStateToProps)(loginScreen)
+export default connect(mapStateToProps)(withNavigation(loginScreen))
