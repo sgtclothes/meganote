@@ -4,6 +4,16 @@ import {withNavigation} from 'react-navigation'
 
 class Feeds extends Component {
 
+    constructor(props) {
+        super(props)
+        this.state = {
+            active:'true',
+            selectedNote:[],
+            date :''
+        }
+    }
+
+
     componentDidMount() {
         this.focusListener = this.props.navigation.addListener('didFocus',async ()=>{
         await BackHandler.addEventListener('hardwareBackPressFeeds',this.handleBackButtonFeeds)
@@ -20,7 +30,7 @@ class Feeds extends Component {
         return (
             <View>
                 <Text>
-                    Feeds Page
+                    Tes
                 </Text>
             </View>
         )

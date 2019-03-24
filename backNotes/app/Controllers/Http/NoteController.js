@@ -16,6 +16,7 @@ class NoteController {
         let note = new Notes()
         note.title = title
         note.note = noteFill
+        note.user_id = 
 
         await note.save() 
         await Database.table('reminders').insert({note_id:note.id})
@@ -71,7 +72,7 @@ class NoteController {
 		await note.save()
 
 		return response.status(200).json(note)
-	}
+    }
 
 }
 

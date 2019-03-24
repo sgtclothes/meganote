@@ -20,7 +20,7 @@ import registerScreen from './screens/registerScreen'
 import splashScreen from './screens/splashScreen'
 import profileScreen from './screens/profileScreen'
 import editItem from './screens/editItem'
-import Feeds from './screens/Feeds'
+// import Feeds from './screens/Feeds'
 import editProfile from './screens/editProfile'
 import newReminder from './screens/newReminder'
 
@@ -40,14 +40,14 @@ const BottomTabNavigator = createBottomTabNavigator({
 		}
   },
   
-  Feeds:{screen:Feeds, 
-		navigationOptions : {
-			tabBarLabel:"Feeds",
-			tabBarIcon: ({tintColor}) => (
-				<IconFontAwesome name="feed" size={30} color='#3B53EA'/>
-			)
-		}
-  },
+  // Feeds:{screen:Feeds, 
+	// 	navigationOptions : {
+	// 		tabBarLabel:"Feeds",
+	// 		tabBarIcon: ({tintColor}) => (
+	// 			<IconFontAwesome name="feed" size={30} color='#3B53EA'/>
+	// 		)
+	// 	}
+  // },
   
   profileScreen:{screen:profileScreen, 
 		navigationOptions : {

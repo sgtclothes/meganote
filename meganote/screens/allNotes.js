@@ -5,7 +5,7 @@ import {withNavigation} from 'react-navigation'
 import {connect} from 'react-redux'
 
 import {changeLoginStatus} from '../src/publics/redux/actions/users'
-import {getNotes} from '../src/publics/redux/actions/notes'
+import {getNotes, get} from '../src/publics/redux/actions/notes'
 
 import IconMaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import IconFontAwesome from 'react-native-vector-icons/FontAwesome'
@@ -18,11 +18,26 @@ class allNotes extends Component {
         this.state = {
             active:'true',
             selectedNote:[],
-            appState: AppState.currentState
+            appState: AppState.currentState,
+            currentDate :''
         }
     }
 
-    componentDidMount() {
+    async componentDidMount() {
+        let year = await new Date().getFullYear()
+        Date.prototype.getMonthFormatted = function() {
+            var month = this.getMonth() + 1;
+            return month < 10 ? '0' + month : month;
+        }
+        Date.prototype.getDateFormatted = function() {
+            var date = this.getDate();
+            return date < 10 ? '0' + date : date;
+        }
+        let date = new Date()
+        await this.setState({
+            currentDate: year+'-'+date.getMonthFormatted()+'-'+date.getDateFormatted()
+        })
+        await AsyncStorage.setItem('currentDate',String(this.state.currentDate))
         AppState.addEventListener('change', this._handleAppStateChange)
         this.focusListener = this.props.navigation.addListener('didFocus',()=>{
         BackHandler.addEventListener('hardwareBackPress', this.handleBackButton) 
@@ -92,7 +107,8 @@ class allNotes extends Component {
     async _handleCheckToken() {
         const a = await AsyncStorage.getItem('token')
         const b = await AsyncStorage.getItem('id')
-        alert(JSON.stringify(this.props.notes.data))
+        const currentDate = await AsyncStorage.getItem('currentDate')
+        alert(JSON.stringify(currentDate))
     }
 
     _regularExpression(item) {
@@ -124,6 +140,7 @@ class allNotes extends Component {
                             <IconMaterialIcons color='white' name='search' size={20} onPress={()=>{}}/> 
                         </Right>
                     </Header>
+                    <Text style={{marginLeft:10, color:'#3B53EA'}}> Current Date : {this.state.currentDate}</Text>
                     <Card style={{flexDirection:'row', marginTop:10}}>
                         <IconSimpleLineIcons style={{marginLeft:10}} name='note' size={30} color='#3B53EA' />
                         <Text onPress={()=>{alert(JSON.stringify(this.props.notes.data))}} style={{fontSize:20, marginLeft:5, fontWeight:'bold', color:'#3B53EA', alignSelf:'center'}}>All Notes</Text>
@@ -147,7 +164,7 @@ class allNotes extends Component {
                             />
                     <Card style={{flexDirection:'row', marginTop:10}}>
                         <IconSimpleLineIcons style={{marginLeft:10}} name='clock' size={30} color='#3B53EA' />
-                        <Text onPress={()=>{this._handleCheckToken()}} style={{fontSize:20, marginLeft:5, fontWeight:'bold', color:'#3B53EA', alignSelf:'center'}}>All Reminders</Text>
+                        <Text onPress={()=>{this._handleCheckToken()}} style={{fontSize:20, marginLeft:5, fontWeight:'bold', color:'#3B53EA', alignSelf:'center'}}>All Reminders </Text>
                     </Card>
                         <FlatList
                             data={this.props.notes.data}

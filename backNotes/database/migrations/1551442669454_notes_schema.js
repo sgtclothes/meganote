@@ -3,24 +3,24 @@
 /** @type {import('@adonisjs/lucid/src/Schema')} */
 const Schema = use('Schema')
 
-class RemindersSchema extends Schema {
+class NotesSchema extends Schema {
   up () {
-    this.table('reminders', (table) => {
+    this.table('notes', (table) => {
       // alter table
-      table.integer('note_id')
+      table.integer('user_id')
       .unsigned()
       .references('id')
-      .inTable('notes')
+      .inTable('users')
       .onUpdate('NO ACTION')
       .onDelete('SET NULL');
     })
   }
 
   down () {
-    this.table('reminders', (table) => {
+    this.table('notes', (table) => {
       // reverse alternations
     })
   }
 }
 
-module.exports = RemindersSchema
+module.exports = NotesSchema
